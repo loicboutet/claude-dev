@@ -162,4 +162,17 @@ export class ClaudeDev {
             await this.providerRef.deref()?.postStateToWebview()
         }
     }
+
+    async getCommitMessage(): Promise<string> {
+        const response = await this.recursivelyMakeClaudeRequests([
+            { type: "text", text: "Please provide a concise and descriptive commit message for the changes made in this task." },
+        ])
+        const commitMessage = response.content && response.content[0]?.text ? response.content[0].text.trim() : "Task completed"
+        return commitMessage
+    }
+
+    async commitChanges(commitMessage: string): Promise<string> {
+        const result = await this.toolExecutor.executeTool("commit_changes", { message: commitMessage })
+        return result
+    }
 }

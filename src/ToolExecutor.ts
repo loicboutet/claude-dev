@@ -64,6 +64,10 @@ export class ToolExecutor {
                 return this.askFollowupQuestion(toolInput.question);
             case "attempt_completion":
                 return this.attemptCompletion(toolInput.result, toolInput.command);
+            case "create_branch":
+                return this.createBranch(toolInput.branchName);
+            case "commit_changes":
+                return this.commitChanges(toolInput.message);
             default:
                 return `Unknown tool: ${toolName}`;
         }
@@ -241,5 +245,29 @@ export class ToolExecutor {
         }
         await this.claudeDev.say("user_feedback", text ?? "");
         return `The user is not pleased with the results. Use the feedback they provided to successfully complete the task, and then attempt completion again.\nUser's feedback:\n\"${text}\"`;
+    }
+
+    private async createBranch(branchName: string): Promise<string> {
+        try {
+            const sanitizedBranchName = branchName.replace(/[^a-zA-Z0-9-_/]/g, '-').toLowerCase();
+            await this.executeCommand(`git checkout -b ${sanitizedBranchName}`);
+            return `Created and switched to new branch: ${sanitizedBranchName}`;
+        } catch (error) {
+            const errorString = `Error creating branch: ${JSON.stringify(serializeError(error))}`;
+            this.claudeDev.say("error", `Error creating branch:\n${error.message ?? JSON.stringify(serializeError(error), null, 2)}`);
+            return errorString;
+        }
+    }
+
+    private async commitChanges(message: string): Promise<string> {
+        try {
+            await this.executeCommand('git add .');
+            await this.executeCommand(`git commit -m "${message}"`);
+            return `Changes committed successfully with message: "${message}"`;
+        } catch (error) {
+            const errorString = `Error committing changes: ${JSON.stringify(serializeError(error))}`;
+            this.claudeDev.say("error", `Error committing changes:\n${error.message ?? JSON.stringify(serializeError(error), null, 2)}`);
+            return errorString;
+        }
     }
 }

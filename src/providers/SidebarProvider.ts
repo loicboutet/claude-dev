@@ -16,6 +16,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 	private claudeDev?: ClaudeDev
 	private taskHistoryManager: TaskHistoryManager
 	private currentTask?: string
+	private taskCompleted: boolean = false
+	private messageHandlers: { [key: string]: (message: any) => Promise<void> } = {}
 
 	constructor(public readonly context: vscode.ExtensionContext) {
 		this.taskHistoryManager = new TaskHistoryManager(context);
@@ -45,6 +47,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 		this.clearTask()
 	}
 
+	setWebviewMessageHandler(type: string, handler: (message: any) => Promise<void>) {
+		this.messageHandlers[type] = handler;
+	}
+
 	async tryToInitClaudeDevWithTask(task: string) {
 		const [
 			apiKey,
@@ -70,6 +76,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 				autoApproveExecuteCommand || false
 			)
 			this.currentTask = task
+			this.taskCompleted = false
+			await this.postStateToWebview()
 		}
 	}
 
@@ -121,51 +129,62 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 	private setWebviewMessageListener(webview: vscode.Webview) {
 		webview.onDidReceiveMessage(async (message: WebviewMessage) => {
 			console.log("Received message from webview:", JSON.stringify(message, null, 2))
-			switch (message.type) {
-				case "webviewDidLaunch":
-					await this.updateGlobalState("didOpenOnce", true)
-					await this.postStateToWebview()
-					await this.postTaskHistoryToWebview()
-					break
-				case "newTask":
-					await this.tryToInitClaudeDevWithTask(message.text!)
-					this.taskHistoryManager.addTask(message.text!, [])
-					await this.postTaskHistoryToWebview()
-					break
-				case "loadTask":
-					if ('taskId' in message && message.taskId) {
-						await this.loadTaskFromHistory(message.taskId)
-					}
-					break
-				case "apiKey":
-					await this.storeSecret("apiKey", message.text!)
-					this.claudeDev?.updateApiKey(message.text!)
-					await this.postStateToWebview()
-					break
-				case "maxRequestsPerTask":
-					let result: number | undefined = undefined
-					if (message.text && message.text.trim()) {
-						const num = Number(message.text)
-						if (!isNaN(num)) {
-							result = num
+			if (this.messageHandlers[message.type]) {
+				await this.messageHandlers[message.type](message);
+			} else {
+				switch (message.type) {
+					case "webviewDidLaunch":
+						await this.updateGlobalState("didOpenOnce", true)
+						await this.postStateToWebview()
+						await this.postTaskHistoryToWebview()
+						break
+					case "newTask":
+						await this.tryToInitClaudeDevWithTask(message.text!)
+						this.taskHistoryManager.addTask(message.text!, [])
+						await this.postTaskHistoryToWebview()
+						break
+					case "loadTask":
+						if ('taskId' in message && message.taskId) {
+							await this.loadTaskFromHistory(message.taskId)
 						}
-					}
-					await this.updateGlobalState("maxRequestsPerTask", result)
-					this.claudeDev?.updateMaxRequestsPerTask(result)
-					await this.postStateToWebview()
-					break
-				case "autoApproveNonDestructive":
-				case "autoApproveWriteToFile":
-				case "autoApproveExecuteCommand":
-					await this.updateAutoApproveSetting(message.type, message.value as boolean)
-					break
-				case "askResponse":
-					this.claudeDev?.handleWebviewAskResponse(message.askResponse!, message.text)
-					break
-				case "clearTask":
-					await this.clearTask()
-					await this.postStateToWebview()
-					break
+						break
+					case "apiKey":
+						await this.storeSecret("apiKey", message.text!)
+						this.claudeDev?.updateApiKey(message.text!)
+						await this.postStateToWebview()
+						break
+					case "maxRequestsPerTask":
+						let result: number | undefined = undefined
+						if (message.text && message.text.trim()) {
+							const num = Number(message.text)
+							if (!isNaN(num)) {
+								result = num
+							}
+						}
+						await this.updateGlobalState("maxRequestsPerTask", result)
+						this.claudeDev?.updateMaxRequestsPerTask(result)
+						await this.postStateToWebview()
+						break
+					case "autoApproveNonDestructive":
+					case "autoApproveWriteToFile":
+					case "autoApproveExecuteCommand":
+						await this.updateAutoApproveSetting(message.type, message.value as boolean)
+						break
+					case "askResponse":
+						this.claudeDev?.handleWebviewAskResponse(message.askResponse!, message.text)
+						break
+					case "clearTask":
+						await this.clearTask()
+						await this.postStateToWebview()
+						break
+					case "taskCompleted":
+						this.taskCompleted = true
+						await this.postStateToWebview()
+						break
+					case "acceptTaskAndCommit":
+						await this.commitChanges()
+						break
+				}
 			}
 		})
 	}
@@ -212,7 +231,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 				claudeMessages,
 				autoApproveNonDestructive: !!autoApproveNonDestructive,
 				autoApproveWriteToFile: !!autoApproveWriteToFile,
-				autoApproveExecuteCommand: !!autoApproveExecuteCommand
+				autoApproveExecuteCommand: !!autoApproveExecuteCommand,
+				taskCompleted: this.taskCompleted,
+				currentTask: this.currentTask
 			},
 		})
 	}
@@ -237,7 +258,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 			this.claudeDev = undefined
 		}
 		this.currentTask = undefined
+		this.taskCompleted = false
 		await this.setClaudeMessages([])
+		await this.postStateToWebview()
 	}
 
 	async loadTaskFromHistory(taskId: string) {
@@ -282,6 +305,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 		const messages = await this.getClaudeMessages()
 		messages.push(message)
 		await this.setClaudeMessages(messages)
+		// Check if this message indicates task completion
+		if (message.type === "say" && message.say === "completion_result") {
+			this.taskCompleted = true
+			await this.postStateToWebview()
+		}
 		return messages
 	}
 
@@ -307,6 +335,23 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
 	private async getSecret(key: ExtensionSecretKey) {
 		return await this.context.secrets.get(key)
+	}
+
+	private async commitChanges() {
+		if (this.claudeDev) {
+			const commitMessage = await this.claudeDev.getCommitMessage()
+			const result = await this.claudeDev.commitChanges(commitMessage)
+			await this.addClaudeMessage({
+				ts: Date.now(),
+				type: "say",
+				say: "text",
+				text: result,
+				role: "assistant"
+			})
+			this.taskCompleted = false
+			this.currentTask = undefined
+			await this.postStateToWebview()
+		}
 	}
 }
 
