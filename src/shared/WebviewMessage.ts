@@ -4,6 +4,7 @@ export interface WebviewMessage {
 		| "newTask"
 		| "loadTask"
 		| "apiKey"
+		| "perplexityApiKey"
 		| "maxRequestsPerTask"
 		| "askResponse"
 		| "clearTask"

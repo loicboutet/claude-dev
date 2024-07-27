@@ -11,6 +11,8 @@ import { vscode } from "../utilities/vscode"
 type SettingsViewProps = {
 	apiKey: string
 	setApiKey: React.Dispatch<React.SetStateAction<string>>
+	perplexityApiKey: string
+	setPerplexityApiKey: React.Dispatch<React.SetStateAction<string>>
 	maxRequestsPerTask: string
 	setMaxRequestsPerTask: React.Dispatch<React.SetStateAction<string>>
 	autoApproveNonDestructive: boolean
@@ -27,6 +29,8 @@ type AutoApproveSettingType = "autoApproveNonDestructive" | "autoApproveWriteToF
 const SettingsView = ({
 	apiKey,
 	setApiKey,
+	perplexityApiKey,
+	setPerplexityApiKey,
 	maxRequestsPerTask,
 	setMaxRequestsPerTask,
 	autoApproveNonDestructive,
@@ -38,9 +42,10 @@ const SettingsView = ({
 	onDone,
 }: SettingsViewProps) => {
 	const [apiKeyErrorMessage, setApiKeyErrorMessage] = useState<string | undefined>(undefined)
+	const [perplexityApiKeyErrorMessage, setPerplexityApiKeyErrorMessage] = useState<string | undefined>(undefined)
 	const [maxRequestsErrorMessage, setMaxRequestsErrorMessage] = useState<string | undefined>(undefined)
 
-	const disableDoneButton = apiKeyErrorMessage != null || maxRequestsErrorMessage != null
+	const disableDoneButton = apiKeyErrorMessage != null || perplexityApiKeyErrorMessage != null || maxRequestsErrorMessage != null
 
 	const handleApiKeyChange = (event: any) => {
 		const input = event.target.value
@@ -53,6 +58,21 @@ const SettingsView = ({
 			setApiKeyErrorMessage("API Key cannot be empty")
 		} else {
 			setApiKeyErrorMessage(undefined)
+		}
+	}
+
+	const handlePerplexityApiKeyChange = (event: any) => {
+		const input = event.target.value
+		setPerplexityApiKey(input)
+		validatePerplexityApiKey(input)
+	}
+
+	const validatePerplexityApiKey = (value: string) => {
+		// Perplexity API key can be optional, so we don't set an error if it's empty
+		if (value.trim() !== "" && value.trim().length < 5) {
+			setPerplexityApiKeyErrorMessage("Invalid Perplexity API Key")
+		} else {
+			setPerplexityApiKeyErrorMessage(undefined)
 		}
 	}
 
@@ -90,6 +110,7 @@ const SettingsView = ({
 
 	const handleSubmit = () => {
 		vscode.postMessage({ type: "apiKey", text: apiKey })
+		vscode.postMessage({ type: "perplexityApiKey", text: perplexityApiKey })
 		vscode.postMessage({ type: "maxRequestsPerTask", text: maxRequestsPerTask })
 		onDone()
 	}
@@ -97,6 +118,7 @@ const SettingsView = ({
 	// validate as soon as the component is mounted
 	useEffect(() => {
 		validateApiKey(apiKey)
+		validatePerplexityApiKey(perplexityApiKey)
 		validateMaxRequests(maxRequestsPerTask)
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
@@ -143,6 +165,37 @@ const SettingsView = ({
 					This key is not shared with anyone and only used to make API requests from the extension.
 					<VSCodeLink href="https://console.anthropic.com/" style={{ display: "inline" }}>
 						You can get an API key by signing up here.
+					</VSCodeLink>
+				</p>
+			</div>
+
+			<div style={{ marginBottom: "20px" }}>
+				<VSCodeTextField
+					value={perplexityApiKey}
+					style={{ width: "100%" }}
+					placeholder="Enter your Perplexity API Key (optional)"
+					onInput={handlePerplexityApiKeyChange}>
+					Perplexity API Key
+				</VSCodeTextField>
+				{perplexityApiKeyErrorMessage && (
+					<p
+						style={{
+							fontSize: "12px",
+							marginTop: "5px",
+							color: "var(--vscode-errorForeground)",
+						}}>
+						{perplexityApiKeyErrorMessage}
+					</p>
+				)}
+				<p
+					style={{
+						fontSize: "12px",
+						marginTop: "5px",
+						color: "var(--vscode-descriptionForeground)",
+					}}>
+					This key is optional and used to query Perplexity for up-to-date information.
+					<VSCodeLink href="https://www.perplexity.ai/settings/api" style={{ display: "inline" }}>
+						You can get an API key here.
 					</VSCodeLink>
 				</p>
 			</div>

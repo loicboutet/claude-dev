@@ -7,23 +7,31 @@ import { execa } from "execa"
 import { serializeError } from "serialize-error"
 import * as diff from "diff"
 import { ClaudeSayTool } from "./shared/ExtensionMessage"
+import { ApiHandler } from "./ApiHandler"
+import { ClaudeRequestResult } from "./shared/ClaudeRequestResult"
 
 export class ToolExecutor {
 	private claudeDev: ClaudeDev
 	private autoApproveNonDestructive: boolean
 	private autoApproveWriteToFile: boolean
 	private autoApproveExecuteCommand: boolean
+	private perplexityApiKey?: string
+	private apiHandler: ApiHandler
 
 	constructor(
 		claudeDev: ClaudeDev,
 		autoApproveNonDestructive: boolean,
 		autoApproveWriteToFile: boolean,
-		autoApproveExecuteCommand: boolean
+		autoApproveExecuteCommand: boolean,
+		apiHandler: ApiHandler,
+		perplexityApiKey?: string
 	) {
 		this.claudeDev = claudeDev
 		this.autoApproveNonDestructive = autoApproveNonDestructive
 		this.autoApproveWriteToFile = autoApproveWriteToFile
 		this.autoApproveExecuteCommand = autoApproveExecuteCommand
+		this.apiHandler = apiHandler
+		this.perplexityApiKey = perplexityApiKey
 	}
 
 	updateAutoApproveSettings(
@@ -34,6 +42,10 @@ export class ToolExecutor {
 		this.autoApproveNonDestructive = autoApproveNonDestructive
 		this.autoApproveWriteToFile = autoApproveWriteToFile
 		this.autoApproveExecuteCommand = autoApproveExecuteCommand
+	}
+
+	updatePerplexityApiKey(perplexityApiKey: string | undefined) {
+		this.perplexityApiKey = perplexityApiKey
 	}
 
 	private shouldAutoApprove(toolName: ToolName): boolean {
@@ -64,6 +76,8 @@ export class ToolExecutor {
 				return this.askFollowupQuestion(toolInput.question)
 			case "attempt_completion":
 				return this.attemptCompletion(toolInput.result, toolInput.command)
+			case "perplexity_query":
+				return this.perplexityQuery(toolInput.question)
 			default:
 				return `Unknown tool: ${toolName}`
 		}
@@ -250,5 +264,28 @@ export class ToolExecutor {
 		}
 		await this.claudeDev.say("user_feedback", text ?? "")
 		return `The user is not pleased with the results. Use the feedback they provided to successfully complete the task, and then attempt completion again.\nUser's feedback:\n\"${text}\"`
+	}
+
+	private async perplexityQuery(question: string): Promise<string> {
+		if (!this.perplexityApiKey) {
+			return "Perplexity API key is not set. Please set it in the settings to use this feature."
+		}
+
+		try {
+			const response = await this.apiHandler.makePerplexityRequest(question, this.perplexityApiKey)
+
+			if (response.didCompleteTask) {
+				return `Perplexity API Response:\n${response.content}\n\nTokens used: Input: ${response.inputTokens}, Output: ${response.outputTokens}`
+			} else {
+				return "Failed to get a response from Perplexity API."
+			}
+		} catch (error) {
+			const errorString = `Error querying Perplexity API: ${JSON.stringify(serializeError(error))}`
+			this.claudeDev.say(
+				"error",
+				`Error querying Perplexity API:\n${error.message ?? JSON.stringify(serializeError(error), null, 2)}`
+			)
+			return errorString
+		}
 	}
 }

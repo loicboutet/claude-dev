@@ -111,7 +111,7 @@ export const tools: Tool[] = [
 	{
 		name: "write_to_file",
 		description:
-			"Write content to a file at the specified path. If the file exists, only the necessary changes will be applied. If the file doesn't exist, it will be created. Always provide the full intended content of the file. This tool will automatically create any necessary directories needed to write the file.",
+			"Write content to a file at the specified path. If the file exists, only the necessary changes will be applied. If the file doesn't exist, it will be created. Always provide the full intended content of the file. This tool will automatically create any directories needed to write the file.",
 		input_schema: {
 			type: "object",
 			properties: {
@@ -162,6 +162,21 @@ export const tools: Tool[] = [
 				},
 			},
 			required: ["result"],
+		},
+	},
+	{
+		name: "perplexity_query",
+		description:
+			"Make a query to Perplexity AI to get information from the internet. This is particularly useful for getting up-to-date information or API definitions when coding. Use this tool when you need to access current information that might not be in your training data. When asking for API information ask perplexity to give the OpenAPI definition of the API you're looking for",
+		input_schema: {
+			type: "object",
+			properties: {
+				question: {
+					type: "string",
+					description: "The question to ask Perplexity AI.",
+				},
+			},
+			required: ["question"],
 		},
 	},
 ]

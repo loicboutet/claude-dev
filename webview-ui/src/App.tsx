@@ -20,6 +20,7 @@ const App: React.FC = () => {
 	const [showWelcome, setShowWelcome] = useState<boolean>(false)
 	const [showTaskHistory, setShowTaskHistory] = useState<boolean>(false)
 	const [apiKey, setApiKey] = useState<string>("")
+	const [perplexityApiKey, setPerplexityApiKey] = useState<string>("")
 	const [maxRequestsPerTask, setMaxRequestsPerTask] = useState<string>("")
 	const [claudeMessages, setClaudeMessages] = useState<ClaudeMessage[]>([])
 	const [taskHistory, setTaskHistory] = useState<TaskHistoryItem[]>([])
@@ -38,6 +39,7 @@ const App: React.FC = () => {
 					const shouldShowWelcome = !message.state!.didOpenOnce || !message.state!.apiKey
 					setShowWelcome(shouldShowWelcome)
 					setApiKey(message.state!.apiKey || "")
+					setPerplexityApiKey(message.state!.perplexityApiKey || "")
 					setMaxRequestsPerTask(
 						message.state!.maxRequestsPerTask !== undefined
 							? message.state!.maxRequestsPerTask.toString()
@@ -107,6 +109,8 @@ const App: React.FC = () => {
 						<SettingsView
 							apiKey={apiKey}
 							setApiKey={setApiKey}
+							perplexityApiKey={perplexityApiKey}
+							setPerplexityApiKey={setPerplexityApiKey}
 							maxRequestsPerTask={maxRequestsPerTask}
 							setMaxRequestsPerTask={setMaxRequestsPerTask}
 							autoApproveNonDestructive={autoApproveNonDestructive}

@@ -7,6 +7,7 @@ export type ToolName =
 	| "execute_command"
 	| "ask_followup_question"
 	| "attempt_completion"
+	| "perplexity_query"
 
 export type Tool = Omit<Anthropic.Tool, "name"> & {
 	name: ToolName

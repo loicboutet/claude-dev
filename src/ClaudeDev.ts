@@ -27,6 +27,7 @@ export class ClaudeDev {
 	private autoApproveNonDestructive: boolean
 	private autoApproveWriteToFile: boolean
 	private autoApproveExecuteCommand: boolean
+	private perplexityApiKey?: string
 
 	constructor(
 		provider: SidebarProvider,
@@ -35,7 +36,8 @@ export class ClaudeDev {
 		maxRequestsPerTask?: number,
 		autoApproveNonDestructive: boolean = false,
 		autoApproveWriteToFile: boolean = false,
-		autoApproveExecuteCommand: boolean = false
+		autoApproveExecuteCommand: boolean = false,
+		perplexityApiKey?: string
 	) {
 		this.providerRef = new WeakRef(provider)
 		this.client = new Anthropic({ apiKey })
@@ -45,13 +47,16 @@ export class ClaudeDev {
 		this.autoApproveNonDestructive = autoApproveNonDestructive
 		this.autoApproveWriteToFile = autoApproveWriteToFile
 		this.autoApproveExecuteCommand = autoApproveExecuteCommand
+		this.perplexityApiKey = perplexityApiKey
+		this.apiHandler = new ApiHandler(this.client, this.conversationHistory, this)
 		this.toolExecutor = new ToolExecutor(
 			this,
 			this.autoApproveNonDestructive,
 			this.autoApproveWriteToFile,
-			this.autoApproveExecuteCommand
+			this.autoApproveExecuteCommand,
+			this.apiHandler,
+			this.perplexityApiKey
 		)
-		this.apiHandler = new ApiHandler(this.client, this.conversationHistory, this)
 
 		this.startTask(task)
 	}
@@ -59,6 +64,11 @@ export class ClaudeDev {
 	updateApiKey(apiKey: string) {
 		this.client = new Anthropic({ apiKey })
 		this.apiHandler.updateClient(this.client)
+	}
+
+	updatePerplexityApiKey(perplexityApiKey: string | undefined) {
+		this.perplexityApiKey = perplexityApiKey
+		this.toolExecutor.updatePerplexityApiKey(perplexityApiKey)
 	}
 
 	updateMaxRequestsPerTask(maxRequestsPerTask: number | undefined) {

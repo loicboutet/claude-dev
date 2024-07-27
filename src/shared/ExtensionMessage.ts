@@ -11,6 +11,7 @@ export interface ExtensionMessage {
 	state?: {
 		didOpenOnce: boolean
 		apiKey?: string
+		perplexityApiKey?: string
 		maxRequestsPerTask?: number
 		claudeMessages: ClaudeMessage[]
 		autoApproveNonDestructive: boolean

@@ -5,7 +5,7 @@ import { TaskHistoryManager, Message, Task } from "../TaskHistoryManager"
 import { WebviewMessage } from "../shared/WebviewMessage"
 import { ClaudeDev } from "../ClaudeDev"
 
-type ExtensionSecretKey = "apiKey"
+type ExtensionSecretKey = "apiKey" | "perplexityApiKey"
 type ExtensionGlobalStateKey = "didOpenOnce" | "maxRequestsPerTask" | "autoApproveNonDestructive" | "autoApproveWriteToFile" | "autoApproveExecuteCommand"
 type ExtensionWorkspaceStateKey = "claudeMessages"
 
@@ -52,13 +52,15 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 			maxRequestsPerTask,
 			autoApproveNonDestructive,
 			autoApproveWriteToFile,
-			autoApproveExecuteCommand
+			autoApproveExecuteCommand,
+			perplexityApiKey
 		] = await Promise.all([
 			this.getSecret("apiKey") as Promise<string | undefined>,
 			this.getGlobalState("maxRequestsPerTask") as Promise<number | undefined>,
 			this.getGlobalState("autoApproveNonDestructive") as Promise<boolean>,
 			this.getGlobalState("autoApproveWriteToFile") as Promise<boolean>,
 			this.getGlobalState("autoApproveExecuteCommand") as Promise<boolean>,
+			this.getSecret("perplexityApiKey") as Promise<string | undefined>,
 		])
 		if (this.view && apiKey) {
 			this.claudeDev = new ClaudeDev(
@@ -68,7 +70,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 				maxRequestsPerTask,
 				autoApproveNonDestructive || false,
 				autoApproveWriteToFile || false,
-				autoApproveExecuteCommand || false
+				autoApproveExecuteCommand || false,
+				perplexityApiKey
 			)
 			this.currentTask = task
 		}
@@ -143,6 +146,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 					this.claudeDev?.updateApiKey(message.text!)
 					await this.postStateToWebview()
 					break
+				case "perplexityApiKey":
+					await this.storeSecret("perplexityApiKey", message.text!)
+					this.claudeDev?.updatePerplexityApiKey(message.text!)
+					await this.postStateToWebview()
+					break
 				case "maxRequestsPerTask":
 					let result: number | undefined = undefined
 					if (message.text && message.text.trim()) {
@@ -190,6 +198,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 		const [
 			didOpenOnce,
 			apiKey,
+			perplexityApiKey,
 			maxRequestsPerTask,
 			claudeMessages,
 			autoApproveNonDestructive,
@@ -198,6 +207,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 		] = await Promise.all([
 			this.getGlobalState("didOpenOnce") as Promise<boolean | undefined>,
 			this.getSecret("apiKey") as Promise<string | undefined>,
+			this.getSecret("perplexityApiKey") as Promise<string | undefined>,
 			this.getGlobalState("maxRequestsPerTask") as Promise<number | undefined>,
 			this.getClaudeMessages(),
 			this.getGlobalState("autoApproveNonDestructive") as Promise<boolean | undefined>,
@@ -209,6 +219,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 			state: {
 				didOpenOnce: !!didOpenOnce,
 				apiKey,
+				perplexityApiKey,
 				maxRequestsPerTask,
 				claudeMessages,
 				autoApproveNonDestructive: !!autoApproveNonDestructive,
