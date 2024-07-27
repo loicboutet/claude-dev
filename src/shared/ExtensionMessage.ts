@@ -16,6 +16,8 @@ export interface ExtensionMessage {
 		autoApproveNonDestructive: boolean
 		autoApproveWriteToFile: boolean
 		autoApproveExecuteCommand: boolean
+		taskCompleted: boolean
+		currentTask?: string
 	}
 	taskHistory?: Task[]
 	message?: string
@@ -29,6 +31,8 @@ export interface ClaudeMessage {
 	ask?: ClaudeAsk
 	say?: ClaudeSay
 	text?: string
+	role?: "assistant" | "user"
+	content?: string
 }
 
 export type ClaudeAsk = "request_limit_reached" | "followup" | "command" | "completion_result" | "tool"

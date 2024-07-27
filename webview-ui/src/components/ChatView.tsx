@@ -39,6 +39,7 @@ const ChatView: React.FC<ChatViewProps> = ({ messages, isHidden, onMessagesUpdat
 
 	const [primaryButtonText, setPrimaryButtonText] = useState<string | undefined>(undefined)
 	const [secondaryButtonText, setSecondaryButtonText] = useState<string | undefined>(undefined)
+	const [showCommitButton, setShowCommitButton] = useState(false)
 
 	const scrollToBottom = (instant: boolean = false) => {
 		const options = {
@@ -77,30 +78,35 @@ const ChatView: React.FC<ChatViewProps> = ({ messages, isHidden, onMessagesUpdat
 							setClaudeAsk("request_limit_reached")
 							setPrimaryButtonText("Proceed")
 							setSecondaryButtonText("Start New Task")
+							setShowCommitButton(false)
 							break
 						case "followup":
 							setTextAreaDisabled(false)
 							setClaudeAsk("followup")
 							setPrimaryButtonText(undefined)
 							setSecondaryButtonText(undefined)
+							setShowCommitButton(false)
 							break
 						case "tool":
 							setTextAreaDisabled(true)
 							setClaudeAsk("tool")
 							setPrimaryButtonText("Approve")
 							setSecondaryButtonText("Cancel")
+							setShowCommitButton(false)
 							break
 						case "command":
 							setTextAreaDisabled(true)
 							setClaudeAsk("command")
 							setPrimaryButtonText("Run Command")
 							setSecondaryButtonText("Cancel")
+							setShowCommitButton(false)
 							break
 						case "completion_result":
 							setTextAreaDisabled(false)
 							setClaudeAsk("completion_result")
 							setPrimaryButtonText("Start New Task")
 							setSecondaryButtonText(undefined)
+							setShowCommitButton(true)
 							break
 					}
 					break
@@ -126,6 +132,7 @@ const ChatView: React.FC<ChatViewProps> = ({ messages, isHidden, onMessagesUpdat
 			setClaudeAsk(undefined)
 			setPrimaryButtonText(undefined)
 			setSecondaryButtonText(undefined)
+			setShowCommitButton(false)
 		}
 	}, [messages.length])
 
@@ -147,6 +154,7 @@ const ChatView: React.FC<ChatViewProps> = ({ messages, isHidden, onMessagesUpdat
 			setClaudeAsk(undefined)
 			setPrimaryButtonText(undefined)
 			setSecondaryButtonText(undefined)
+			setShowCommitButton(false)
 		}
 	}
 
@@ -165,6 +173,7 @@ const ChatView: React.FC<ChatViewProps> = ({ messages, isHidden, onMessagesUpdat
 		setClaudeAsk(undefined)
 		setPrimaryButtonText(undefined)
 		setSecondaryButtonText(undefined)
+		setShowCommitButton(false)
 	}
 
 	const handleSecondaryButtonClick = () => {
@@ -185,6 +194,12 @@ const ChatView: React.FC<ChatViewProps> = ({ messages, isHidden, onMessagesUpdat
 		setClaudeAsk(undefined)
 		setPrimaryButtonText(undefined)
 		setSecondaryButtonText(undefined)
+		setShowCommitButton(false)
+	}
+
+	const handleCommitButtonClick = () => {
+		vscode.postMessage({ type: "commitFiles" })
+		setShowCommitButton(false)
 	}
 
 	const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -295,14 +310,14 @@ const ChatView: React.FC<ChatViewProps> = ({ messages, isHidden, onMessagesUpdat
 					<ChatRow key={index} message={message} />
 				))}
 			</div>
-			{(primaryButtonText || secondaryButtonText) && (
+			{(primaryButtonText || secondaryButtonText || showCommitButton) && (
 				<div style={{ display: "flex", padding: "10px 15px 0px 15px" }}>
 					{primaryButtonText && (
 						<VSCodeButton
 							appearance="primary"
 							style={{
-								flex: secondaryButtonText ? 1 : 2,
-								marginRight: secondaryButtonText ? "6px" : "0",
+								flex: (secondaryButtonText || showCommitButton) ? 1 : 2,
+								marginRight: (secondaryButtonText || showCommitButton) ? "6px" : "0",
 							}}
 							onClick={handlePrimaryButtonClick}>
 							{primaryButtonText}
@@ -314,6 +329,14 @@ const ChatView: React.FC<ChatViewProps> = ({ messages, isHidden, onMessagesUpdat
 							style={{ flex: 1, marginLeft: "6px" }}
 							onClick={handleSecondaryButtonClick}>
 							{secondaryButtonText}
+						</VSCodeButton>
+					)}
+					{showCommitButton && (
+						<VSCodeButton
+							appearance="secondary"
+							style={{ flex: 1, marginLeft: "6px" }}
+							onClick={handleCommitButtonClick}>
+							Accept Task and Commit Files
 						</VSCodeButton>
 					)}
 				</div>

@@ -149,17 +149,6 @@ export class ClaudeDev {
 		this.currentTaskId = null
 	}
 
-	async recursivelyMakeClaudeRequests(
-		userContent: Array<
-			| Anthropic.TextBlockParam
-			| Anthropic.ImageBlockParam
-			| Anthropic.ToolUseBlockParam
-			| Anthropic.ToolResultBlockParam
-		>
-	): Promise<ClaudeRequestResult> {
-		return this.apiHandler.makeRequest(userContent, this.requestCount, this.maxRequestsPerTask, this.toolExecutor)
-	}
-
 	async loadHistoryTask(taskId: string): Promise<void> {
 		const task = this.taskHistoryManager.getTaskById(taskId)
 		if (task) {
@@ -168,5 +157,22 @@ export class ClaudeDev {
 				?.setClaudeMessages(this.messageFormatter.convertHistoryMessagesToClaudeMessages(task.messages))
 			await this.providerRef.deref()?.postStateToWebview()
 		}
+	}
+
+	async getCommitMessage(): Promise<string> {
+		const response = await this.recursivelyMakeClaudeRequests([
+			{
+				type: "text",
+				text: "Please provide a concise and descriptive commit message for the changes made in this task.",
+			},
+		])
+		const commitMessage =
+			response.content && response.content[0]?.text ? response.content[0].text.trim() : "Task completed"
+		return commitMessage
+	}
+
+	async commitChanges(commitMessage: string): Promise<string> {
+		const result = await this.toolExecutor.executeTool("commit_changes", { message: commitMessage })
+		return result
 	}
 }

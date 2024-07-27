@@ -3,6 +3,7 @@
 import * as vscode from "vscode"
 import { SidebarProvider } from "./providers/SidebarProvider"
 import { TaskHistoryManager } from "./TaskHistoryManager"
+import { GitManager } from "./GitManager"
 
 /*
 Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -48,6 +49,35 @@ export function activate(context: vscode.ExtensionContext) {
 			provider.postMessageToWebview({ type: "action", action: "taskHistoryCleared" })
 		})
 	)
+
+	// New command for creating a Git branch
+	context.subscriptions.push(
+		vscode.commands.registerCommand("claude-dev.createGitBranch", async (branchName: string) => {
+			const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+			if (workspaceRoot) {
+				const gitManager = new GitManager(workspaceRoot)
+				await gitManager.createBranch(branchName)
+			} else {
+				vscode.window.showErrorMessage("No workspace folder found. Please open a folder and try again.")
+			}
+		})
+	)
+
+	// Handle the commitFiles message
+	provider.setWebviewMessageHandler("commitFiles", async () => {
+		const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+		if (workspaceRoot) {
+			const gitManager = new GitManager(workspaceRoot)
+			try {
+				await gitManager.commitAllChanges("Task completed by Claude Dev")
+				vscode.window.showInformationMessage("Changes committed successfully.")
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to commit changes: ${error}`)
+			}
+		} else {
+			vscode.window.showErrorMessage("No workspace folder found. Please open a folder and try again.")
+		}
+	})
 }
 
 // This method is called when your extension is deactivated

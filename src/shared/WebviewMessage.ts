@@ -12,6 +12,9 @@ export interface WebviewMessage {
 		| "autoApproveNonDestructive"
 		| "autoApproveWriteToFile"
 		| "autoApproveExecuteCommand"
+		| "taskCompleted"
+		| "acceptTaskAndCommit"
+		| "commitFiles"
 	text?: string
 	taskId?: string
 	askResponse?: ClaudeAskResponse
