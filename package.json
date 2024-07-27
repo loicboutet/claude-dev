@@ -1,147 +1,149 @@
 {
-  "name": "claude-dev",
-  "displayName": "Claude Dev",
-  "description": "Claude Dev goes beyond simple code completion by reading & writing files, creating projects, and executing terminal commands with your permission.",
-  "version": "0.0.6",
-  "engines": {
-    "vscode": "^1.82.0"
-  },
-  "author": { "name": "Saoud Rizwan" },
-  "license": "MIT",
-  "publisher": "saoudrizwan",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/saoudrizwan/claude-dev"
-  },
-  "categories": [
-    "AI"
-  ],
-  "keywords": [
-    "AI",
-    "Claude",
-    "agentic",
-    "productivity",
-    "automation"
-  ],
-  "activationEvents": [],
-  "main": "./dist/extension.js",
-  "contributes": {
-    "configuration": {
-      "title": "Claude Dev",
-      "properties": {
-        "claudeDev.autoApprove.nonDestructive": {
-          "type": "boolean",
-          "default": false,
-          "description": "Auto-approve non-destructive actions like reading a file or listing files."
-        },
-        "claudeDev.autoApprove.writeToFile": {
-          "type": "boolean",
-          "default": false,
-          "description": "Auto-approve write_to_file actions."
-        },
-        "claudeDev.autoApprove.executeCommand": {
-          "type": "boolean",
-          "default": false,
-          "description": "Auto-approve execute_command actions."
-        }
-      }
-    },
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "claude-dev-ActivityBar",
-          "title": "Claude Dev",
-          "icon": "$(robot)"
-        }
-      ]
-    },
-    "views": {
-      "claude-dev-ActivityBar": [
-        {
-          "type": "webview",
-          "id": "claude-dev.SidebarProvider",
-          "name": ""
-        }
-      ]
-    },
-    "commands": [
-      {
-        "command": "claude-dev.plusButtonTapped",
-        "title": "New Task",
-        "icon": "$(add)"
-      },
-      {
-        "command": "claude-dev.showTaskHistory",
-        "title": "History",
-        "icon": "$(menu)"
-      },
-      {
-        "command": "claude-dev.settingsButtonTapped",
-        "title": "Settings",
-        "icon": "$(settings-gear)"
-      }
-    ],
-    "menus": {
-      "view/title": [
-        {
-          "command": "claude-dev.plusButtonTapped",
-          "group": "navigation",
-          "when": "view == claude-dev.SidebarProvider"
-        },
-        {
-          "command": "claude-dev.showTaskHistory",
-          "group": "navigation",
-          "when": "view == claude-dev.SidebarProvider"
-        },
-        {
-          "command": "claude-dev.settingsButtonTapped",
-          "group": "navigation",
-          "when": "view == claude-dev.SidebarProvider"
-        }
-      ]
-    }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "npm run check-types && npm run lint && node esbuild.js",
-    "watch": "npm-run-all -p watch:*",
-    "watch:esbuild": "node esbuild.js --watch",
-    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "npm run build:webview && npm run check-types && npm run lint && node esbuild.js --production",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "check-types": "tsc --noEmit",
-    "lint": "eslint src --ext ts",
-    "test": "vscode-test",
-    "install:all": "npm install && cd webview-ui && npm install",
-    "start:webview": "cd webview-ui && npm run start",
-    "build:webview": "cd webview-ui && npm run build",
-    "test:webview": "cd webview-ui && npm run test"
-  },
-  "devDependencies": {
-    "@types/diff": "^5.2.1",
-    "@types/mocha": "^10.0.7",
-    "@types/node": "20.x",
-    "@types/vscode": "^1.82.0",
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.11.0",
-    "@vscode/test-cli": "^0.0.9",
-    "@vscode/test-electron": "^2.4.0",
-    "esbuild": "^0.21.5",
-    "eslint": "^8.57.0",
-    "npm-run-all": "^4.1.5",
-    "typescript": "^5.4.5"
-  },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.24.3",
-    "@vscode/codicons": "^0.0.36",
-    "default-shell": "^2.2.0",
-    "diff": "^5.2.0",
-    "execa": "^9.3.0",
-    "glob": "^10.4.3",
-    "os-name": "^6.0.0",
-    "p-wait-for": "^5.0.2",
-    "serialize-error": "^11.0.3"
-  }
+	"name": "claude-dev",
+	"displayName": "Claude Dev",
+	"description": "Claude Dev goes beyond simple code completion by reading & writing files, creating projects, and executing terminal commands with your permission.",
+	"version": "0.0.6",
+	"engines": {
+		"vscode": "^1.82.0"
+	},
+	"author": {
+		"name": "Saoud Rizwan"
+	},
+	"license": "MIT",
+	"publisher": "saoudrizwan",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/saoudrizwan/claude-dev"
+	},
+	"categories": [
+		"AI"
+	],
+	"keywords": [
+		"AI",
+		"Claude",
+		"agentic",
+		"productivity",
+		"automation"
+	],
+	"activationEvents": [],
+	"main": "./dist/extension.js",
+	"contributes": {
+		"configuration": {
+			"title": "Claude Dev",
+			"properties": {
+				"claudeDev.autoApprove.nonDestructive": {
+					"type": "boolean",
+					"default": false,
+					"description": "Auto-approve non-destructive actions like reading a file or listing files."
+				},
+				"claudeDev.autoApprove.writeToFile": {
+					"type": "boolean",
+					"default": false,
+					"description": "Auto-approve write_to_file actions."
+				},
+				"claudeDev.autoApprove.executeCommand": {
+					"type": "boolean",
+					"default": false,
+					"description": "Auto-approve execute_command actions."
+				}
+			}
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "claude-dev-ActivityBar",
+					"title": "Claude Dev",
+					"icon": "$(robot)"
+				}
+			]
+		},
+		"views": {
+			"claude-dev-ActivityBar": [
+				{
+					"type": "webview",
+					"id": "claude-dev.SidebarProvider",
+					"name": ""
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "claude-dev.plusButtonTapped",
+				"title": "New Task",
+				"icon": "$(add)"
+			},
+			{
+				"command": "claude-dev.showTaskHistory",
+				"title": "History",
+				"icon": "$(menu)"
+			},
+			{
+				"command": "claude-dev.settingsButtonTapped",
+				"title": "Settings",
+				"icon": "$(settings-gear)"
+			}
+		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "claude-dev.plusButtonTapped",
+					"group": "navigation",
+					"when": "view == claude-dev.SidebarProvider"
+				},
+				{
+					"command": "claude-dev.showTaskHistory",
+					"group": "navigation",
+					"when": "view == claude-dev.SidebarProvider"
+				},
+				{
+					"command": "claude-dev.settingsButtonTapped",
+					"group": "navigation",
+					"when": "view == claude-dev.SidebarProvider"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run package",
+		"compile": "npm run check-types && npm run lint && node esbuild.js",
+		"watch": "npm-run-all -p watch:*",
+		"watch:esbuild": "node esbuild.js --watch",
+		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+		"package": "npm run build:webview && npm run check-types && npm run lint && node esbuild.js --production",
+		"compile-tests": "tsc -p . --outDir out",
+		"watch-tests": "tsc -p . -w --outDir out",
+		"pretest": "npm run compile-tests && npm run compile && npm run lint",
+		"check-types": "tsc --noEmit",
+		"lint": "eslint src --ext ts",
+		"test": "vscode-test",
+		"install:all": "npm install && cd webview-ui && npm install",
+		"start:webview": "cd webview-ui && npm run start",
+		"build:webview": "cd webview-ui && npm run build",
+		"test:webview": "cd webview-ui && npm run test"
+	},
+	"devDependencies": {
+		"@types/diff": "^5.2.1",
+		"@types/mocha": "^10.0.7",
+		"@types/node": "20.x",
+		"@types/vscode": "^1.82.0",
+		"@typescript-eslint/eslint-plugin": "^7.14.1",
+		"@typescript-eslint/parser": "^7.11.0",
+		"@vscode/test-cli": "^0.0.9",
+		"@vscode/test-electron": "^2.4.0",
+		"esbuild": "^0.21.5",
+		"eslint": "^8.57.0",
+		"npm-run-all": "^4.1.5",
+		"typescript": "^5.4.5"
+	},
+	"dependencies": {
+		"@anthropic-ai/sdk": "^0.24.3",
+		"@vscode/codicons": "^0.0.36",
+		"default-shell": "^2.2.0",
+		"diff": "^5.2.0",
+		"execa": "^9.3.0",
+		"glob": "^10.4.3",
+		"os-name": "^6.0.0",
+		"p-wait-for": "^5.0.2",
+		"serialize-error": "^11.0.3"
+	}
 }

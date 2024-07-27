@@ -6,7 +6,12 @@ import { WebviewMessage } from "../shared/WebviewMessage"
 import { ClaudeDev } from "../ClaudeDev"
 
 type ExtensionSecretKey = "apiKey"
-type ExtensionGlobalStateKey = "didOpenOnce" | "maxRequestsPerTask" | "autoApproveNonDestructive" | "autoApproveWriteToFile" | "autoApproveExecuteCommand"
+type ExtensionGlobalStateKey =
+	| "didOpenOnce"
+	| "maxRequestsPerTask"
+	| "autoApproveNonDestructive"
+	| "autoApproveWriteToFile"
+	| "autoApproveExecuteCommand"
 type ExtensionWorkspaceStateKey = "claudeMessages"
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
@@ -20,7 +25,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 	private messageHandlers: { [key: string]: (message: any) => Promise<void> } = {}
 
 	constructor(public readonly context: vscode.ExtensionContext) {
-		this.taskHistoryManager = new TaskHistoryManager(context);
+		this.taskHistoryManager = new TaskHistoryManager(context)
 	}
 
 	resolveWebviewView(
@@ -48,16 +53,17 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 	}
 
 	setWebviewMessageHandler(type: string, handler: (message: any) => Promise<void>) {
-		this.messageHandlers[type] = handler;
+		this.messageHandlers[type] = handler
 	}
 
+	// Initializing new instance of ClaudeDev will make sure that any agentically running promises in old instance don't affect our new task. this essentially creates a fresh slate for the new task
 	async tryToInitClaudeDevWithTask(task: string) {
 		const [
 			apiKey,
 			maxRequestsPerTask,
 			autoApproveNonDestructive,
 			autoApproveWriteToFile,
-			autoApproveExecuteCommand
+			autoApproveExecuteCommand,
 		] = await Promise.all([
 			this.getSecret("apiKey") as Promise<string | undefined>,
 			this.getGlobalState("maxRequestsPerTask") as Promise<number | undefined>,
@@ -130,7 +136,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 		webview.onDidReceiveMessage(async (message: WebviewMessage) => {
 			console.log("Received message from webview:", JSON.stringify(message, null, 2))
 			if (this.messageHandlers[message.type]) {
-				await this.messageHandlers[message.type](message);
+				await this.messageHandlers[message.type](message)
 			} else {
 				switch (message.type) {
 					case "webviewDidLaunch":
@@ -144,7 +150,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 						await this.postTaskHistoryToWebview()
 						break
 					case "loadTask":
-						if ('taskId' in message && message.taskId) {
+						if ("taskId" in message && message.taskId) {
 							await this.loadTaskFromHistory(message.taskId)
 						}
 						break
@@ -212,7 +218,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 			claudeMessages,
 			autoApproveNonDestructive,
 			autoApproveWriteToFile,
-			autoApproveExecuteCommand
+			autoApproveExecuteCommand,
 		] = await Promise.all([
 			this.getGlobalState("didOpenOnce") as Promise<boolean | undefined>,
 			this.getSecret("apiKey") as Promise<string | undefined>,
@@ -233,7 +239,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 				autoApproveWriteToFile: !!autoApproveWriteToFile,
 				autoApproveExecuteCommand: !!autoApproveExecuteCommand,
 				taskCompleted: this.taskCompleted,
-				currentTask: this.currentTask
+				currentTask: this.currentTask,
 			},
 		})
 	}
@@ -243,19 +249,19 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 		console.log("Posting task history to webview:", JSON.stringify(tasks, null, 2))
 		this.postMessageToWebview({
 			type: "taskHistory",
-			taskHistory: tasks.map(task => ({
+			taskHistory: tasks.map((task) => ({
 				id: task.id,
 				description: task.description,
 				timestamp: task.timestamp,
-				messages: task.messages
+				messages: task.messages,
 			})),
 		})
 	}
 
 	async clearTask() {
 		if (this.claudeDev) {
-			this.claudeDev.abort = true
-			this.claudeDev = undefined
+			this.claudeDev.abort = true // Will stop any agentically running promises
+			this.claudeDev = undefined // Removes reference to it, so once promises end it will be garbage collected
 		}
 		this.currentTask = undefined
 		this.taskCompleted = false
@@ -276,7 +282,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 			// Send a separate message to the webview to ensure it updates the UI
 			this.postMessageToWebview({
 				type: "loadedTaskHistory",
-				messages: task.messages
+				messages: task.messages,
 			})
 		} else {
 			console.error("Task not found for id:", taskId)
@@ -293,7 +299,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 		console.log("Setting Claude messages:", JSON.stringify(messages, null, 2))
 		await this.updateWorkspaceState("claudeMessages", messages)
 		if (this.currentTask) {
-			const currentTask = this.taskHistoryManager.getTasks().find(task => task.description === this.currentTask)
+			const currentTask = this.taskHistoryManager.getTasks().find((task) => task.description === this.currentTask)
 			if (currentTask) {
 				this.taskHistoryManager.updateTaskMessages(currentTask.id, messages || [])
 			}
@@ -346,7 +352,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 				type: "say",
 				say: "text",
 				text: result,
-				role: "assistant"
+				role: "assistant",
 			})
 			this.taskCompleted = false
 			this.currentTask = undefined

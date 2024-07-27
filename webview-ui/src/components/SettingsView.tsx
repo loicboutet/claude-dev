@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react"
-import { VSCodeTextField, VSCodeDivider, VSCodeLink, VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
+import {
+	VSCodeTextField,
+	VSCodeDivider,
+	VSCodeLink,
+	VSCodeButton,
+	VSCodeCheckbox,
+} from "@vscode/webview-ui-toolkit/react"
 import { vscode } from "../utilities/vscode"
 
 type SettingsViewProps = {
@@ -16,7 +22,7 @@ type SettingsViewProps = {
 	onDone: () => void
 }
 
-type AutoApproveSettingType = "autoApproveNonDestructive" | "autoApproveWriteToFile" | "autoApproveExecuteCommand";
+type AutoApproveSettingType = "autoApproveNonDestructive" | "autoApproveWriteToFile" | "autoApproveExecuteCommand"
 
 const SettingsView = ({
 	apiKey,
@@ -29,7 +35,7 @@ const SettingsView = ({
 	setAutoApproveWriteToFile,
 	autoApproveExecuteCommand,
 	setAutoApproveExecuteCommand,
-	onDone
+	onDone,
 }: SettingsViewProps) => {
 	const [apiKeyErrorMessage, setApiKeyErrorMessage] = useState<string | undefined>(undefined)
 	const [maxRequestsErrorMessage, setMaxRequestsErrorMessage] = useState<string | undefined>(undefined)
@@ -67,16 +73,19 @@ const SettingsView = ({
 				setMaxRequestsErrorMessage(undefined)
 			}
 		} else {
-            setMaxRequestsErrorMessage(undefined)
-        }
+			setMaxRequestsErrorMessage(undefined)
+		}
 	}
 
-	const handleAutoApproveChange = (setter: React.Dispatch<React.SetStateAction<boolean>>, settingType: AutoApproveSettingType) => {
+	const handleAutoApproveChange = (
+		setter: React.Dispatch<React.SetStateAction<boolean>>,
+		settingType: AutoApproveSettingType
+	) => {
 		return (e: any) => {
-			const target = e.target as HTMLInputElement;
-			setter(target.checked);
-			vscode.postMessage({ type: settingType, value: target.checked });
-		};
+			const target = e.target as HTMLInputElement
+			setter(target.checked)
+			vscode.postMessage({ type: settingType, value: target.checked })
+		}
 	}
 
 	const handleSubmit = () => {
@@ -89,7 +98,7 @@ const SettingsView = ({
 	useEffect(() => {
 		validateApiKey(apiKey)
 		validateMaxRequests(maxRequestsPerTask)
-	// eslint-disable-next-line react-hooks/exhaustive-deps
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	return (
@@ -173,7 +182,9 @@ const SettingsView = ({
 				<h4 style={{ color: "var(--vscode-foreground)", marginBottom: "10px" }}>Auto-approve Settings</h4>
 				<VSCodeCheckbox
 					checked={autoApproveNonDestructive}
-					onChange={handleAutoApproveChange(setAutoApproveNonDestructive, "autoApproveNonDestructive") as any}>
+					onChange={
+						handleAutoApproveChange(setAutoApproveNonDestructive, "autoApproveNonDestructive") as any
+					}>
 					Auto-approve non-destructive actions (read_file, list_files)
 				</VSCodeCheckbox>
 				<VSCodeCheckbox
@@ -183,7 +194,9 @@ const SettingsView = ({
 				</VSCodeCheckbox>
 				<VSCodeCheckbox
 					checked={autoApproveExecuteCommand}
-					onChange={handleAutoApproveChange(setAutoApproveExecuteCommand, "autoApproveExecuteCommand") as any}>
+					onChange={
+						handleAutoApproveChange(setAutoApproveExecuteCommand, "autoApproveExecuteCommand") as any
+					}>
 					Auto-approve execute_command actions
 				</VSCodeCheckbox>
 				<p
@@ -192,7 +205,8 @@ const SettingsView = ({
 						marginTop: "5px",
 						color: "var(--vscode-descriptionForeground)",
 					}}>
-					Be cautious when enabling auto-approve for write_to_file and execute_command, as these can modify your system.
+					Be cautious when enabling auto-approve for write_to_file and execute_command, as these can modify
+					your system.
 				</p>
 			</div>
 
@@ -209,7 +223,7 @@ const SettingsView = ({
 				}}>
 				<p>
 					This project was made for Anthropic's "Build with Claude June 2024 contest"
-					<br/>
+					<br />
 					<VSCodeLink href="https://github.com/saoudrizwan/claude-dev">
 						https://github.com/saoudrizwan/claude-dev
 					</VSCodeLink>
